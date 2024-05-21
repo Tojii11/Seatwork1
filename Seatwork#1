@@ -1,0 +1,109 @@
+<?php
+session_start();
+
+$todoList = array();
+
+if (isset($_SESSION["todoList"])) {
+    $todoList = $_SESSION["todoList"];
+}
+
+function appendData($data)
+{
+    global $todoList; // Access the global variable $todoList
+    $todoList[] = array(
+        'task' => $data,
+        'completed' => false
+    );
+    return $todoList;
+}
+
+function deleteData($toDelete, $todoList)
+{
+    foreach ($todoList as $index => $task) {
+        if ($task['task'] === $toDelete) {
+            unset($todoList[$index]);
+        }
+    }
+    return $todoList;
+}
+
+function markTaskAsCompleted($taskName)
+{
+    global $todoList; // Access the global variable $todoList
+    foreach ($todoList as &$task) {
+        if ($task['task'] === $taskName) {
+            $task['completed'] = true;
+        }
+    }
+    return $todoList;
+}
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (empty($_POST["task"])) {
+        echo '<script>alert("Error: there is no data to add in array")</script>';
+        exit;
+    }
+
+    appendData($_POST["task"]); // Update the global $todoList directly
+    $_SESSION["todoList"] = $todoList;
+}
+
+if (isset($_GET['task'])) {
+    $_SESSION["todoList"] = deleteData($_GET['task'], $todoList);
+}
+
+if (isset($_GET['completeTask'])) {
+    $_SESSION["todoList"] = markTaskAsCompleted($_GET['completeTask']);
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple To-Do List</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">To-Do List</h1>
+        <div class="card">
+            <div class="card-header">Add a new task</div>
+            <div class="card-body">
+                <form method="post" action="">
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="task" placeholder="Enter your task here">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Task</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header">Tasks</div>
+            <ul class="list-group list-group-flush">
+                <?php
+                foreach ($todoList as $task) {
+                    echo '<div class="d-flex p-2 bd-highlight w-100 justify-content-between">';
+                    if ($task['completed']) {
+                        echo '<li class="list-group-item w-100 text-muted"><del>' . $task['task'] . '</del></li>';
+                    } else {
+                        echo '<li class="list-group-item w-100">' . $task['task'] . '</li>';
+                    }
+                    echo '<a href="index.php?delete=true&task=' . $task['task'] . '" class="btn btn-danger">Delete</a>';
+                    echo '<a href="index.php?completeTask=' . $task['task'] . '" class="btn btn-success">Complete</a>';
+                    echo '</div>';
+                }
+                ?>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
